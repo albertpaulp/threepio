@@ -5,6 +5,7 @@ import (
   "net/http"
   "io/ioutil"
   "encoding/json"
+  "os"
 )
 
 type Commit struct {
@@ -14,11 +15,25 @@ type Commit struct {
 
 type GithubResponse []Commit
 
+func exit(msg string){
+  fmt.Println(msg)
+  os.Exit(1)
+}
+
 func main() {
   client := &http.Client{}
-  url := ""
+  repo_name, exists := os.LookupEnv("GITHUB_REPO")
+  if exists == false {
+    exit("ENV:GITHUB_REPO not set !")
+  }
+  secret_token_env, exists := os.LookupEnv("GITHUB_TOKEN")
+  githubToken := fmt.Sprintf("token %s", secret_token_env)
+  if exists == false {
+    exit("ENV:GITHUB_TOKEN not set !")
+  }
+  url := fmt.Sprintf("https://api.github.com/repos/%s/commits?since=2019-11-26T00:00:00", repo_name)
   request, err := http.NewRequest("GET", url, nil)
-  request.Header.Add("Authorization", "token ")
+  request.Header.Add("Authorization", githubToken)
   request.Header.Add("Accept", "application/vnd.github.v3+json")
   response, err := client.Do(request)
   if err != nil {
